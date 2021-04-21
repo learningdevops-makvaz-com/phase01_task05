@@ -1,3 +1,6 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
 Vagrant.configure("2") do |config|
   config.vm.define 'database' do |db|
     db.vm.box = "generic/ubuntu2004"
@@ -14,9 +17,8 @@ Vagrant.configure("2") do |config|
 
     db.vm.provision "ansible_local" do |ansible|
       ansible.playbook = "database.yaml"
-      ansible.pip_install_cmd = "sudo apt-get install -y python3-distutils && curl -s https://bootstrap.pypa.io/get-pip.py | sudo python3"
-      ansible.verbose="v"
-      ansible.extra_vars = { ansible_python_interpreter:"/usr/bin/python3" }
+    ansible.verbose="v"
+    ansible.extra_vars = { ansible_python_interpreter:"/usr/bin/python3.8" }
     end
   end
   config.vm.define 'wordpress' do |wp|
@@ -34,9 +36,8 @@ Vagrant.configure("2") do |config|
 
     wp.vm.provision "ansible_local" do |ansible|
       ansible.playbook = "wordpress.yaml"
-      ansible.pip_install_cmd = "sudo apt-get install -y python3-distutils && curl -s https://bootstrap.pypa.io/get-pip.py | sudo python3"
-      ansible.verbose="v"
-      ansible.extra_vars = { ansible_python_interpreter:"/usr/bin/python3" }
+    ansible.verbose="v"
+    ansible.extra_vars = { ansible_python_interpreter:"/usr/bin/python3.8" }
     end
   end
 end
