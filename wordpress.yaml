@@ -1,6 +1,6 @@
 ---
 - name: Deploy Wordpress
-  hosts: all
+  hosts: wordpress
   become: yes
   tasks:
     - name: Update system
@@ -15,7 +15,6 @@
       apt:
         name: 
           - php-mysql 
-          - mysql-server 
           - php-curl 
           - php-gd 
           - php-intl 
@@ -35,7 +34,7 @@
     
     - name: Download WP
       get_url: 
-        url: https://wordpress.org/latest.zip
+        url: https://wordpress.org/wordpress-5.7.1.zip
         dest: /var/www
     - name: Extract wp
       unarchive: 
@@ -75,7 +74,7 @@
         group: www-data
         mode: 0755
     
-    - name: Restart nginx service
+    - name: Make sure nginx service is started
       service:
         name: nginx
-        state: restarted
+        state: started

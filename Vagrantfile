@@ -17,8 +17,12 @@ Vagrant.configure("2") do |config|
 
     db.vm.provision "ansible_local" do |ansible|
       ansible.playbook = "database.yaml"
+      ansible.galaxy_role_file = 'requirements.yaml'
+      ansible.galaxy_roles_path = '/vagrant/.ansible/roles'
+      ansible.galaxy_command = 'ansible-galaxy collection install community.mysql'
     ansible.verbose="v"
     ansible.extra_vars = { ansible_python_interpreter:"/usr/bin/python3.8" }
+
     end
   end
   config.vm.define 'wordpress' do |wp|
