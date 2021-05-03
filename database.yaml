@@ -1,7 +1,36 @@
 ---
 - name: Setup database
   hosts: database
+  become: yes
   tasks:
+    - name: update 
+      apt:
+        update_cache: yes
+    - name: upgrade
+      apt:
+        upgrade: dist
 
-    - name: message to remove
-      command: echo 'Here you gonna put all tasks and roles that gonna setup database'
+    - name: Install software 
+      apt:
+        name: 
+          - mysql-server
+     # DB will return an error if the db already exists, need to ignore errors 
+    - name: Create wordpress DB using sql file
+      shell: 'mysql < wordpress.sql'
+      ignore_errors: yes
+      args:
+        chdir: /vagrant/
+
+    - name: Adjust mysql configuration file 
+      replace:
+        path: /etc/mysql/mysql.conf.d/mysqld.cnf
+        regexp: "{{ item }}"
+        replace: '#'
+      with_items:
+      - 'mysqlx'
+      - 'bind-address'
+
+    - name: Make sure mysql is running
+      service:
+        name: mysql 
+        state: restarted
