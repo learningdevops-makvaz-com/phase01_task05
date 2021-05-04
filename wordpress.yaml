@@ -51,21 +51,27 @@
         state: link
         src: /etc/nginx/sites-available/wordpress
         dest: /etc/nginx/sites-enabled/wordpress
+    
     - name: Remove default symbolic link
       file:
         path: /etc/nginx/sites-enabled/default
         state: absent
+    
     - name: Copy over wp-config
       copy:
         src: /vagrant/wp-config.php
         dest: /var/www/wordpress
-
+      notify:
+      - Restart nginx
+      - Set ownership
+    
     - name: Configure wp install with wp-cli
       command: 'wp core install --url=192.168.50.2 --title="Game Player Magazine" --admin_user=admin --admin_password=!2three456. --admin_email=admin@test.com --path=/var/www/wordpress --allow-root'
     - name: Setup wp theme
       command: 'wp theme install twentysixteen --activate --path=/var/www/wordpress --allow-root'
     
-    - name: Set ownership and group owner to www-data
+  handlers:
+    - name: Set ownership
       file:
         path: /var/www/wordpress
         state: directory 
@@ -73,8 +79,7 @@
         owner: www-data
         group: www-data
         mode: 0755
-    
-    - name: Make sure nginx service is started
+    - name: Restart nginx
       service:
         name: nginx
-        state: started
+        state: restarted
