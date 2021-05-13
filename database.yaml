@@ -65,20 +65,25 @@
         login_user: root
         login_password: "{{ mysql_password }}"
 
-    - name: Enable firewall
-      ufw:
-        state: enabled
-
     - name: Open MySQL port
       ufw:
         rule: allow
         port: 3306
         proto: tcp
+      notify: Enable firewall
     
     - name: Configure SSH firewall
       ufw:
         rule: allow
         name: "OpenSSH"
+      notify:
+        - Reload firewall
+        - Restart MYSQL
+  
+  handlers:
+    - name: Enable firewall
+      ufw:
+        state: enabled
     
     - name: Reload firewall
       ufw:
