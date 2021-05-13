@@ -6,7 +6,6 @@
     - /vagrant/variables.yaml
 
   tasks:
-
     - name: Update APT
       apt:
         update_cache: yes
