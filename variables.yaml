@@ -15,7 +15,7 @@ wp_theme: "twentynineteen"
 
 # WP DATABASE CREDENTIALS
 mysql_password: "Qw9M#sL!B"
-wp_db_name: "wordpress"
+wp_db_name: "wordpressdb"
 wp_db_password: "password"
 wp_db_user: "wordpressuser"
-wp_db_host: "localhost"
+wp_db_host: "192.168.50.10"
