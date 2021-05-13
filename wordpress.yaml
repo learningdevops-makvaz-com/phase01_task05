@@ -79,7 +79,8 @@
     - name: Configure wp-config.php
       template:
         src: "/vagrant/wp-config.php.j2"
-        dest: "/var/www/{{ wp_conf_dir }}/wp-config.php"     
+        dest: "/var/www/{{ wp_conf_dir }}/wp-config.php"
+      notify: Restart Nginx     
     
     - name: Install WP-CLI
       get_url:
