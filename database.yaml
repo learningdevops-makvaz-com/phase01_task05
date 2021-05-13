@@ -51,15 +51,15 @@
 
     - name: Change MYSQL binding IP address  
       replace:
-        path: /etc/mysql/mysql.conf.d/mysqld.cnf
-        regexp: "127.0.0.1"
-        replace: "0.0.0.0"
+        path: "{{ mysql_conf_path }}"
+        regexp: "{{ mysql_default_address }}"
+        replace: "{{ mysql_bind_address }}"
 
     - name: Create WordPress user
       mysql_user:
         name: "{{ wp_db_user }}"
         password: "{{ wp_db_password }}"
-        #host: "192.168.50.%"
+        host: "192.168.50.%"
         priv: "*.*:ALL,GRANT"
         state: present
         login_user: root
