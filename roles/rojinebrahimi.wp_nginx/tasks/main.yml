@@ -1,0 +1,39 @@
+---
+# tasks file for rojinebrahimi.wp_nginx
+- name: Update APT
+  apt:
+    update_cache: yes
+    cache_valid_time: 86400
+    #upgrade: 'yes'        
+
+- name: Install packages
+  apt:
+    name: 
+    - nginx
+
+- name: Configure Nginx firewall
+  ufw:
+    rule: allow
+    name: "Nginx Full"
+
+- name: Configure Nginx
+  template:
+    src: "nginx.conf.j2"
+    dest: "/etc/nginx/sites-available/{{ site_dir }}"
+
+- name: Enable Nginx configuration
+  file:
+    src: "/etc/nginx/sites-available/{{ site_dir }}"  
+    dest: "/etc/nginx/sites-enabled/{{ site_dir }}"
+    state: link
+
+- name: Unlink default Nginx
+  file:
+    path: "/etc/nginx/sites-enabled/default"
+    state: absent
+  notify: Restart Nginx 
+  
+- name: Create directory
+  file:
+    path: "/var/www/{{ site_dir }}"
+    state: directory

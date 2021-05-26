@@ -1,0 +1,9 @@
+---
+# WORDPRESS MYSQL DATABASE CREDENTIALS
+mysql_password: "Qw9M#sL!B"
+wp_db_name: "wordpressdb"
+wp_db_password: "password"
+wp_db_user: "wordpressuser"
+mysql_bind_address: "0.0.0.0"
+mysql_default_address: "127.0.0.1"
+mysql_conf_path: "/etc/mysql/mysql.conf.d/mysqld.cnf"

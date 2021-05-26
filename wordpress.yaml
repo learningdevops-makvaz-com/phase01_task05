@@ -2,113 +2,20 @@
 - name: Deploy Wordpress
   hosts: wordpress
   become: yes
-  vars_files:
-    - /vagrant/variables.yaml
-
-  tasks:
-  
-    - name: Update APT
-      apt:
-        update_cache: yes
-        cache_valid_time: 86400
-        #upgrade: 'yes'        
-
-    - name: Install packages
-      apt:
-        name: 
-        - nginx
-        - php-fpm
-        - php-mysql
-        - php-curl
-        - php-gd
-        - php-intl
-        - php-mbstring
-        - php-soap
-        - php-xml
-        - php-xmlrpc
-        - php-zip
-          
-    - name: Configure Nginx firewall
-      ufw:
-        rule: allow
-        name: "Nginx Full"
-        
+  roles:
+    - /vagrant/roles/rojinebrahimi.wp_nginx
+    - /vagrant/roles/rojinebrahimi.wp_php
+    - /vagrant/roles/rojinebrahimi.wordpress
+    
+  tasks:        
     - name: Configure SSH firewall
       ufw:
         rule: allow
         name: "OpenSSH"
-      notify: Reload firewall
-
-    - name: Enable firewall
-      ufw:
-        state: enabled
-    
-    - name: Configure Nginx
-      template:
-        src: "/vagrant/nginx.conf.j2"
-        dest: "/etc/nginx/sites-available/{{ wp_conf_dir }}"
-
-    - name: Enable Nginx configuration
-      file:
-        src: "/etc/nginx/sites-available/{{ wp_conf_dir }}"  
-        dest: "/etc/nginx/sites-enabled/{{ wp_conf_dir }}"
-        state: link
-
-    - name: Unlink default Nginx
-      file:
-        path: "/etc/nginx/sites-enabled/default"
-        state: absent
-      notify: Restart Nginx 
-  
-    - name: Create directory
-      file:
-        path: "/var/www/{{ wp_conf_dir }}"
-        state: directory
-
-    - name: Download WordPress zip
-      get_url:
-        url: "https://wordpress.org/{{ wp_file }}"
-        dest: "/tmp/{{ wp_file }}"
-
-    - name: Extract WordPress
-      unarchive:
-        src: "/tmp/{{ wp_file }}"
-        dest: "/var/www/"
-        creates: "/var/www/{{ wp_conf_dir }}/wp-login.php"
-        
-    - name: Configure wp-config.php
-      template:
-        src: "/vagrant/wp-config.php.j2"
-        dest: "/var/www/{{ wp_conf_dir }}/wp-config.php"
-      notify: Restart Nginx     
-    
-    - name: Install WP-CLI
-      get_url:
-        url: "{{ wp_cli_url }}"
-        dest: "/usr/local/bin/wp"
-        mode: 0755
-
-    - name: Change directory to /var/www/wordpress and install WP
-      command: wp core install --url="{{ wp_host }}" --title="{{ wp_title }}" --admin_user="{{ wp_admin_user }}" --admin_email={{ wp_admin_email }} --admin_password="{{ wp_admin_password }}" --path="/var/www/{{ wp_conf_dir }}" --allow-root
-      args:
-        chdir: "/var/www/{{ wp_conf_dir }}"
-   
-    - name: Configure WordPress theme
-      command: wp theme install "{{ wp_theme }}" --activate --path="/var/www/{{ wp_conf_dir }}" --allow-root
- 
-    - name: Setup privileges
-      file: 
-        dest: "/var/www/{{ wp_conf_dir }}" 
-        owner: www-data 
-        group: www-data 
-        recurse: yes
+      notify: 
+        - Reload firewall
 
   handlers:
-    - name: Restart Nginx
-      ansible.builtin.service:
-        name: nginx
-        state: restarted
-
     - name: Reload firewall
       ufw:
         state: reloaded

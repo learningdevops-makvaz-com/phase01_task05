@@ -1,0 +1,27 @@
+---
+# tasks file for rojinebrahimi.php
+- name: Update APT
+  apt:
+    update_cache: yes
+    cache_valid_time: 86400
+    #upgrade: 'yes'        
+
+- name: Install packages
+  apt:
+    name: 
+    - php-fpm
+    - php-mysql
+    - php-curl
+    - php-gd
+    - php-intl
+    - php-mbstring
+    - php-soap
+    - php-xml
+    - php-xmlrpc
+    - php-zip
+
+- name: Configure wp-config.php
+  template:
+    src: "wp-config.php.j2"
+    dest: "/var/www/{{ site_dir }}/wp-config.php"
+

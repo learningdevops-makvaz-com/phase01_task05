@@ -1,0 +1,10 @@
+---
+# WORDPRESS DIR
+site_dir: "wordpress"
+
+# PHP CONF FOR WORDPRESS DATABASE
+wp_db_name: "wordpressdb"
+wp_db_password: "password"
+wp_db_user: "wordpressuser"
+wp_db_host: "192.168.50.10"
+

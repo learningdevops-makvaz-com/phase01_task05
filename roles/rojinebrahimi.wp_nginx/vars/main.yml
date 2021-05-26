@@ -1,0 +1,4 @@
+---
+# WORDPRESS NGINX CONF
+site_dir: "wordpress"
+host: "192.168.50.2"

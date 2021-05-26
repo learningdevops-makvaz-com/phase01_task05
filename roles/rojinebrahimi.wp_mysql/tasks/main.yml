@@ -1,0 +1,70 @@
+---
+# tasks file for rojinebrahimi.mysql
+- name: Update APT
+  apt:
+    update_cache: yes
+    cache_valid_time: 86400
+   #upgrade: 'yes'   
+
+- name: Install packages
+  apt:
+    name: 
+    - python3-mysqldb
+    - mysql-server
+          
+- name: Set root password in MYSQL
+  mysql_user:
+    name: root
+    password: "{{ mysql_password }}"
+    login_user: root
+    login_password: "{{ mysql_password }}"
+    login_unix_socket: "/var/run/mysqld/mysqld.sock"
+
+- name: Remove all MYSQL anonymous users
+  mysql_user:
+    name: ''
+    host_all: yes
+    state: absent
+    login_user: root
+    login_password: "{{ mysql_password }}"
+  
+- name: Remove MySQL test database
+  mysql_db:
+    name: test
+    state: absent
+    login_user: root
+    login_password: "{{ mysql_password }}"
+
+- name: Create new database
+  mysql_db:
+    name: "{{ wp_db_name }}"
+    state: present
+    login_user: root
+    login_password: "{{ mysql_password }}"
+
+- name: Change MYSQL binding IP address  
+  replace:
+    path: "{{ mysql_conf_path }}"
+    regexp: "{{ mysql_default_address }}"
+    replace: "{{ mysql_bind_address }}"
+
+- name: Create WordPress user
+  mysql_user:
+    name: "{{ wp_db_user }}"
+    password: "{{ wp_db_password }}"
+    host: "192.168.50.%"
+    priv: "*.*:ALL,GRANT"
+    state: present
+    login_user: root
+    login_password: "{{ mysql_password }}"
+
+- name: Open MySQL port
+  ufw:
+    rule: allow
+    port: 3306
+    proto: tcp
+  notify: 
+    - Enable firewall
+    - Reload firewall
+    - Restart MYSQL
+

@@ -1,0 +1,14 @@
+---
+# handlers file for rojinebrahimi.mysql
+- name: Reload firewall
+  ufw:
+    state: reloaded
+
+- name: Restart MYSQL
+  service:
+    name: mysql
+    state: restarted
+
+- name: Enable firewall
+  ufw:
+    state: enabled

@@ -1,0 +1,6 @@
+---
+# handlers file for rojinebrahimi.wp_nginx
+- name: Restart Nginx
+  service:
+    name: nginx
+    state: restarted
