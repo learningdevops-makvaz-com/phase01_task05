@@ -16,3 +16,10 @@ wp_theme: "twentynineteen"
 # PRIVILEGES
 wp_owner: "www-data"
 wp_group: "www-data"
+
+# PHP CONF FOR WORDPRESS DATABASE
+wp_db_name: "wordpressdb"
+wp_db_password: "@rt$SD!vEo7#"
+wp_db_user: "wordpressuser"
+wp_db_host: "192.168.50.10"
+
