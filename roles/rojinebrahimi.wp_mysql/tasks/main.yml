@@ -66,5 +66,3 @@
   notify: 
     - Enable firewall
     - Reload firewall
-    - Restart MYSQL
-
