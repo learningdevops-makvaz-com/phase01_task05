@@ -20,8 +20,3 @@
     - php-xmlrpc
     - php-zip
 
-- name: Configure wp-config.php
-  template:
-    src: "wp-config.php.j2"
-    dest: "/var/www/{{ site_dir }}/wp-config.php"
-
