@@ -53,7 +53,7 @@
     name: "{{ wp_db_user }}"
     password: "{{ wp_db_password }}"
     host: "192.168.50.%"
-    priv: "*.*:ALL,GRANT"
+    priv: "{{ wp_db_name }}.*:ALL,GRANT"
     state: present
     login_user: root
     login_password: "{{ mysql_password }}"
