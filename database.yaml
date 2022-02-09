@@ -9,21 +9,30 @@
     - name: Update & Upgrade the System
       apt:
         update_cache: yes
-        upgrade: yes 
     
     - name: Install MYSQL packages
       apt:
         name:
             - mysql-server
             - python3
-            - firewalld
+            #- firewalld
   
-    - name: Open port 3306
-      ansible.posix.firewalld:
-        port: 3306/tcp
-        permanent: yes
+    #- name: Open port 3306
+    #  ansible.posix.firewalld:
+    #    port: 3306/tcp
+    #    permanent: yes
+    #    state: enabled
+        
+    - name: Enable UFW
+      ufw:
         state: enabled
     
+    - name: Allow all access to tcp port 80
+      ufw:
+        rule: allow
+        port: 3306
+        proto: tcp
+          
     - name: Create Wordpress Database   
       shell: 'mysql < wpDB.sql'
       args:
@@ -35,4 +44,4 @@
     - name: Restart MySQL  
       service:
         name: mysql
-        state: restarted
+        state: reloaded

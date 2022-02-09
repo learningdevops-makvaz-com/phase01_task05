@@ -1,4 +1,10 @@
 ---
+#User variables
+user_name: "ber"
+user_home: "/home/ber"
+user_shell: "/bin/bash"
+user_pwd: 'test01'
+
 #URL variables
 url_wordpress: "https://wordpress.org/latest.tar.gz"
 url_wpcli: "https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar"
@@ -9,6 +15,7 @@ db_user: "berna"
 db_password: "Asd123"
 db_host: "localhost"
 db_iphost: "192.168.50.10"
+mysql_password: "P4SsW0rd!$"
 
 #Nginx & Wordpress variables
 wp_iphost: "192.168.50.2"

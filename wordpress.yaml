@@ -4,11 +4,24 @@
   become: yes
   vars_files:
    - /vagrant/variables.yaml
+   
   tasks:
-    - name: Update & Upgrade the System
-      apt:
-        update_cache: yes
-        upgrade: yes    
+    - name: Create a login user
+      user:
+       name: "{{ user_name }}" 
+       password: "{{ user_pwd | password_hash('sha512') }}"
+       groups: 
+        - sudo
+       append: yes
+       state: present
+       shell: "{{ user_shell }}"        
+       system: yes             
+       createhome: yes        
+       home: "{{ user_home }}"
+       
+    #- name: Update & Upgrade the System
+    #   apt:
+    #    update_cache: yes
     
     - name: Install LEP Packages
       apt:
@@ -23,18 +36,24 @@
             - php7.4-xml
             - php7.4-gd
             - php7.4-curl
+            - acl
             
     - name: Allow NGINX on Firewall   
       ufw:
         rule: allow
         name: "Nginx Full"
         
+    - name: Check if SSL-Certificate exists
+      stat: path="/etc/ssl/certs/nginx-selfsigned.crt"
+      register: sslcrt_exists
+        
     - name: Create SSL-Certificate
       shell: |
             openssl req -x509 -newkey rsa:2048 -days 365 -nodes \
-                -subj "/C=AR/ST=BSAS/L=BSAS/O=WordPress/OU=WP/CN=192.168.50.2" \
+                -subj "/C=AR/ST=BSAS/L=BSAS/O=WordPress/OU=WP/CN={{ wp_iphost }}" \
             -keyout /etc/ssl/private/nginx-selfsigned.key -out /etc/ssl/certs/nginx-selfsigned.crt
             openssl dhparam -out /etc/nginx/dhparam.pem 2048
+      when: sslcrt_exists.stat.exists == false
     
     - name: Copy Conf. Snippets pointing SSL key and certificate
       copy:
@@ -63,12 +82,19 @@
       file:
         path: /etc/nginx/sites-enabled/default
         state: absent
+      notify: Reload Nginx
+        
+    - name: Check if WP dir exists
+      become: yes
+      stat: path="/var/www/{{ wp_root_dir }}"
+      register: wp_dir_exists
         
     - name: Extract Wordpress file        
       unarchive:
         src: "{{ url_wordpress }}"
         dest: "/var/www/"
         remote_src: yes
+      when: not wp_dir_exists.stat.exists
         
     - name: Copy wordpress config php file (wp database connection)        
       template:
@@ -76,29 +102,44 @@
         dest: "/var/www/{{ wp_root_dir }}/wp-config.php"
         force: yes
     
-    - name: Setup owner and group privileges to www-data and 755 permissions.       
+    - name: Setup owner and group privileges to www-data and 755 permissions.  
       file:
-        path: /var/www/{{ wp_root_dir }}
+        path: "/var/www/{{ wp_root_dir }}"
         state: directory
         recurse: yes
         owner: www-data
         group: www-data
         mode: 0755
+    
+    - name: WP-Content directory permissions for: image uploads and wp-cli install.
+      file:
+        path: "/var/www/{{ wp_root_dir }}/wp-content"
+        state: directory
+        recurse: yes
+        mode: 0767
+    
+    - name: Check if WP-CLI dir exists
+      stat: path="/usr/local/bin/wp"
+      register: wp_cli_exists
             
     - name: Download WP-Cli file      
       get_url:
         url: "{{ url_wpcli }}"
         dest: /usr/local/bin/wp
         mode: 0755
+      when: not wp_cli_exists.stat.exists
     
-    - name: Install WP-CLI     
-      shell: 'wp core install --url="{{ wp_iphost }}" --title="{{ title }}" --admin_user="{{ wp_admin_user }}" --admin_email="{{ wp_admin_mail }}" --admin_password="{{ wp_admin_password }}" --path="/var/www/{{ wp_root_dir }}" --allow-root'
+    - name: Install WP-CLI    
+      become_user: ber
+      shell: 'wp core install --url="{{ wp_iphost }}" --title="{{ title }}" --admin_user="{{ wp_admin_user }}" --admin_email="{{ wp_admin_mail }}" --admin_password="{{ wp_admin_password }}" --path="/var/www/{{ wp_root_dir }}"'
       
     - name: Install Theme    
-      shell: 'wp theme install twentynineteen --activate --path="/var/www/{{ wp_root_dir }}" --allow-root'
-      
-    - name: Restart MySQL  
-      service:
+      shell: 'wp theme install twentynineteen --activate --path="/var/www/{{ wp_root_dir }}"'
+         
+  handlers:
+    - name: Reload Nginx
+      become: yes
+      systemd:
         name: nginx
-        state: restarted
+        state: reloaded
      
