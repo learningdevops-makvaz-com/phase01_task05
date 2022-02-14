@@ -44,4 +44,4 @@
     - name: Restart MySQL  
       service:
         name: mysql
-        state: reloaded
+        state: restart

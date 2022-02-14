@@ -53,7 +53,9 @@
                 -subj "/C=AR/ST=BSAS/L=BSAS/O=WordPress/OU=WP/CN={{ wp_iphost }}" \
             -keyout /etc/ssl/private/nginx-selfsigned.key -out /etc/ssl/certs/nginx-selfsigned.crt
             openssl dhparam -out /etc/nginx/dhparam.pem 2048
-      when: sslcrt_exists.stat.exists == false
+      args:
+        creates: /etc/nginx/dhparam.pem
+      #when: sslcrt_exists.stat.exists == false
     
     - name: Copy Conf. Snippets pointing SSL key and certificate
       copy:
