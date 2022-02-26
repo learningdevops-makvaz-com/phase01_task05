@@ -43,9 +43,9 @@
         rule: allow
         name: "Nginx Full"
         
-    - name: Check if SSL-Certificate exists
-      stat: path="/etc/ssl/certs/nginx-selfsigned.crt"
-      register: sslcrt_exists
+    #- name: Check if SSL-Certificate exists
+    #  stat: path="/etc/ssl/certs/nginx-selfsigned.crt"
+    #  register: sslcrt_exists
         
     - name: Create SSL-Certificate
       shell: |
@@ -73,7 +73,8 @@
       template:
         src: "/vagrant/nginx.conf.j2"
         dest: "/etc/nginx/sites-available/{{ wp_root_dir }}"
-        
+      notify: Reload Nginx
+      
     - name: Symbolic link on Wordpress nginx configuration file      
       file:
         src: "/etc/nginx/sites-available/{{ wp_root_dir }}"
@@ -84,7 +85,6 @@
       file:
         path: /etc/nginx/sites-enabled/default
         state: absent
-      notify: Reload Nginx
         
     - name: Check if WP dir exists
       become: yes
@@ -113,7 +113,7 @@
         group: www-data
         mode: 0755
     
-    - name: WP-Content directory permissions for: image uploads and wp-cli install.
+    - name: WP-Content directory permissions for image uploads and wp-cli install.
       file:
         path: "/var/www/{{ wp_root_dir }}/wp-content"
         state: directory
@@ -135,8 +135,8 @@
       become_user: ber
       shell: 'wp core install --url="{{ wp_iphost }}" --title="{{ title }}" --admin_user="{{ wp_admin_user }}" --admin_email="{{ wp_admin_mail }}" --admin_password="{{ wp_admin_password }}" --path="/var/www/{{ wp_root_dir }}"'
       
-    - name: Install Theme    
-      shell: 'wp theme install twentynineteen --activate --path="/var/www/{{ wp_root_dir }}"'
+    - name: Install Theme 
+      shell: 'wp theme install twentynineteen --activate --force --path="/var/www/{{ wp_root_dir }}" --allow-root'
          
   handlers:
     - name: Reload Nginx
