@@ -135,8 +135,9 @@
       become_user: ber
       shell: 'wp core install --url="{{ wp_iphost }}" --title="{{ title }}" --admin_user="{{ wp_admin_user }}" --admin_email="{{ wp_admin_mail }}" --admin_password="{{ wp_admin_password }}" --path="/var/www/{{ wp_root_dir }}"'
       
-    - name: Install Theme 
-      shell: 'wp theme install twentynineteen --activate --force --path="/var/www/{{ wp_root_dir }}" --allow-root'
+    - name: Install Theme
+      become_user: ber
+      shell: 'wp theme install twentynineteen --activate --force --path="/var/www/{{ wp_root_dir }}"'
          
   handlers:
     - name: Reload Nginx
