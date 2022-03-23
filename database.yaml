@@ -1,7 +1,58 @@
 ---
 - name: Setup database
   hosts: database
+  become: true
+  vars_files:
+   - /vagrant/variables.yaml
+  
   tasks:
-
-    - name: message to remove
-      command: echo 'Here you gonna put all tasks and roles that gonna setup database'
+    #- name: Update & Upgrade the System
+    #  apt:
+    #    update_cache: yes
+    
+    - name: Install MYSQL packages
+      apt:
+        name:
+            - mysql-server
+            - python3-mysqldb
+        state: present
+             
+    - name: Create WP Database
+      mysql_db:
+        name: "{{ db_name }}"
+        state: present
+        login_user: root
+        login_password: "{{ mysql_password }}"
+    
+    - name: Create WordPress Database user
+      mysql_user:
+        name: "{{ db_user }}"
+        password: "{{ db_password }}"
+        priv: "{{ db_name }}.*:ALL,GRANT"
+        state: present
+        host: "192.168.50.%"
+        login_user: root
+        login_password: "{{ mysql_password }}"
+        
+    - name: Change "127.0.0.1" strings to "0.0.0.0", so it allows external connections.
+      replace:
+        path: /etc/mysql/mysql.conf.d/mysqld.cnf
+        regexp: "127.0.0.1"
+        replace: "0.0.0.0"
+    
+    - name: Enable UFW
+      ufw:
+        state: enabled
+    
+    - name: Allow wp_iphost access to tcp port 3306
+      ufw:
+        rule: allow
+        from_ip: "{{ wp_iphost }}" 
+        port: 3306
+        proto: tcp     
+    
+    - name: Restart Mysql
+      systemd:
+        name: mysql
+        state: restarted    
+        

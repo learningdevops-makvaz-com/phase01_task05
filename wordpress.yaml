@@ -1,7 +1,148 @@
 ---
 - name: Deploy Wordpress
   hosts: wordpress
+  become: yes
+  vars_files:
+   - /vagrant/variables.yaml
+   
   tasks:
-
-    - name: message to remove
-      command: echo 'Here you gonna put all tasks and roles that gonna setup Wordpress application'
+    - name: Create a login user
+      user:
+       name: "{{ user_name }}" 
+       password: "{{ user_pwd | password_hash('sha512') }}"
+       groups: 
+        - sudo
+       append: yes
+       state: present
+       shell: "{{ user_shell }}"        
+       system: yes             
+       createhome: yes        
+       home: "{{ user_home }}"
+       
+    #- name: Update & Upgrade the System
+    #   apt:
+    #    update_cache: yes
+    
+    - name: Install LEP Packages
+      apt:
+        name:
+            - nginx
+            - php7.4-cli
+            - php7.4-fpm
+            - php7.4-mysql
+            - php7.4-json
+            - php7.4-opcache
+            - php7.4-mbstring
+            - php7.4-xml
+            - php7.4-gd
+            - php7.4-curl
+            - acl
+            
+    - name: Allow NGINX on Firewall   
+      ufw:
+        rule: allow
+        name: "Nginx Full"
+        
+    #- name: Check if SSL-Certificate exists
+    #  stat: path="/etc/ssl/certs/nginx-selfsigned.crt"
+    #  register: sslcrt_exists
+        
+    - name: Create SSL-Certificate
+      shell: |
+            openssl req -x509 -newkey rsa:2048 -days 365 -nodes \
+                -subj "/C=AR/ST=BSAS/L=BSAS/O=WordPress/OU=WP/CN={{ wp_iphost }}" \
+            -keyout /etc/ssl/private/nginx-selfsigned.key -out /etc/ssl/certs/nginx-selfsigned.crt
+            openssl dhparam -out /etc/nginx/dhparam.pem 2048
+      args:
+        creates: /etc/nginx/dhparam.pem
+      #when: sslcrt_exists.stat.exists == false
+    
+    - name: Copy Conf. Snippets pointing SSL key and certificate
+      copy:
+        src: "/vagrant/self-signed.conf"
+        dest: "/etc/nginx/snippets/"
+        remote_src: yes
+        
+    - name: Copy ssl-params
+      copy:
+        src: "/vagrant/ssl-params.conf"
+        dest: "/etc/nginx/snippets/"
+        remote_src: yes
+        
+    - name: Copy Nginx config       
+      template:
+        src: "/vagrant/nginx.conf.j2"
+        dest: "/etc/nginx/sites-available/{{ wp_root_dir }}"
+      notify: Reload Nginx
+      
+    - name: Symbolic link on Wordpress nginx configuration file      
+      file:
+        src: "/etc/nginx/sites-available/{{ wp_root_dir }}"
+        dest: "/etc/nginx/sites-enabled/{{ wp_root_dir }}"
+        state: link
+        
+    - name: Unlink Default nginx config      
+      file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+        
+    - name: Check if WP dir exists
+      become: yes
+      stat: path="/var/www/{{ wp_root_dir }}"
+      register: wp_dir_exists
+        
+    - name: Extract Wordpress file        
+      unarchive:
+        src: "{{ url_wordpress }}"
+        dest: "/var/www/"
+        remote_src: yes
+      when: not wp_dir_exists.stat.exists
+        
+    - name: Copy wordpress config php file (wp database connection)        
+      template:
+        src: "/vagrant/wp-config.php.j2"
+        dest: "/var/www/{{ wp_root_dir }}/wp-config.php"
+        force: yes
+    
+    - name: Setup owner and group privileges to www-data and 755 permissions.  
+      file:
+        path: "/var/www/{{ wp_root_dir }}"
+        state: directory
+        recurse: yes
+        owner: www-data
+        group: www-data
+        mode: 0755
+    
+    - name: WP-Content directory permissions for image uploads and wp-cli install.
+      file:
+        path: "/var/www/{{ wp_root_dir }}/wp-content"
+        state: directory
+        recurse: yes
+        mode: 0767
+    
+    - name: Check if WP-CLI dir exists
+      stat: path="/usr/local/bin/wp"
+      register: wp_cli_exists
+            
+    - name: Download WP-Cli file      
+      get_url:
+        url: "{{ url_wpcli }}"
+        dest: /usr/local/bin/wp
+        mode: 0755
+      when: not wp_cli_exists.stat.exists
+    
+    - name: Install WP-CLI    
+      become_user: ber
+      shell: 'wp core install --url="{{ wp_iphost }}" --title="{{ title }}" --admin_user="{{ wp_admin_user }}" --admin_email="{{ wp_admin_mail }}" --admin_password="{{ wp_admin_password }}" --path="/var/www/{{ wp_root_dir }}"'
+      
+    - name: Install Theme
+      become_user: ber
+      shell: 'wp theme install twentynineteen --activate --force --path="/var/www/{{ wp_root_dir }}"'
+         
+  handlers:
+    - name: Reload Nginx
+      become: yes
+      systemd:
+        name: nginx
+        state: reloaded
+     
